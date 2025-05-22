@@ -1,60 +1,55 @@
 package rotor
 
-import (
-	"fmt"
-	"log/slog"
-	"os"
-	// "github.com/BurntSushi/toml"
-)
-
-type Rotor struct {
-	Name     string `toml:"rotor_name"`
-	Notch    string `toml:"notch"`
-	Turnover string `toml:"turnover"`
-
-	Keymap struct {
-		A string `toml:"a"`
-		B string `toml:"b"`
-		C string `toml:"c"`
-		D string `toml:"d"`
-		E string `toml:"e"`
-		F string `toml:"f"`
-		G string `toml:"g"`
-		H string `toml:"h"`
-		I string `toml:"i"`
-		J string `toml:"j"`
-		K string `toml:"k"`
-		L string `toml:"l"`
-		M string `toml:"m"`
-		N string `toml:"n"`
-		O string `toml:"o"`
-		P string `toml:"p"`
-		Q string `toml:"q"`
-		R string `toml:"r"`
-		S string `toml:"s"`
-		T string `toml:"t"`
-		U string `toml:"u"`
-		V string `toml:"v"`
-		W string `toml:"w"`
-		X string `toml:"x"`
-		Y string `toml:"y"`
-		Z string `toml:"z"`
-	}
+type IRotor interface {
+	EncodeCharForward(Position, bool) (Position, bool)
+	EncodeCharBackward(Position) Position
 }
 
-func NewRotor(rotor RotorType) *Rotor {
-	path, err := os.Executable()
-	if err != nil {
-		slog.Error("unable to get executable path")
-	}
+type Rotor struct {
+  name          string
+  position      Position
+  turnoverNotch Position
+  keymap        map[Position]Position
+}
 
-	rotorFile := fmt.Sprintf("../../configs/rotors/%s.go", rotor)
-	rotorBytes, err := os.ReadFile(rotorFile)
-	if err != nil {
-		slog.Error("unable to read config for rotor", "rotor.file", rotorFile, "error", err)
-	}
+// wrap normalizes a given Position to stay within 0–25 (inclusive)
+// It ensures correct wrapping behavior for both positive and negative input values.
+//
+// Examples:
+//   wrap(27)  => 1   (27 mod 26 = 1)
+//   wrap(-1)  => 25  (-1 mod 26 = 25, i.e. Z)
+//   wrap(0)   => 0   (A)
+//   wrap(26)  => 0   (wraps to A again)
+func wrap(p Position) Position {
+    return (p%26 + 26) % 26
+}
 
-	slog.Info("printing loaded rotor file", "rotor.file.contents", string(rotorBytes))
 
-	return nil
+func (r *Rotor) EncodeCharForward(char Position, incPosition bool) (Position, bool) {
+    if incPosition {
+        r.position = wrap(r.position + 1)
+    }
+
+    enter := wrap(char + r.position)
+
+    wired := r.keymap[enter]
+
+    exited := wrap(wired - r.position)
+
+    trigger := (r.position == r.turnoverNotch)
+    return exited, trigger
+}
+
+func (r *Rotor) EncodeCharBackward(char Position) Position {
+    entered := wrap(char + r.position)
+
+    var wired Position
+    for in, out := range r.keymap {
+        if out == entered {
+            wired = in
+            break
+        }
+    }
+
+    return wrap(wired - r.position)
 }
