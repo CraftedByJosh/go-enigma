@@ -34,3 +34,15 @@ const (
 	Y Position = 24
 	Z Position = 25
 )
+
+// wrap normalizes a given Position (or int) to stay within 0–25
+// It ensures correct wrapping behavior for both positive and negative input values.
+//
+// Examples:
+//   wrap(27)  => 1   (27 mod 26 = 1)
+//   wrap(-1)  => 25  (-1 mod 26 = 25, i.e. Z)
+//   wrap(0)   => 0   (A)
+//   wrap(26)  => 0   (wraps to A again)
+func WrapPosition(p Position) Position {
+    return (p%26 + 26) % 26
+}
