@@ -1,5 +1,7 @@
 package types
 
+import "strings"
+
 type Position int
 
 func (p Position) ToString() string {
@@ -45,4 +47,15 @@ const (
 //   wrap(26)  => 0   (wraps to A again)
 func WrapPosition(p Position) Position {
     return (p%26 + 26) % 26
+}
+
+func StringToPositionSlice(s string) []Position {
+	positions := make([]Position, len(s))
+	upperString := strings.ToUpper(s)
+
+	for i, char := range upperString {
+		positions[i] = Position(char - 'A')
+	}
+
+	return positions
 }

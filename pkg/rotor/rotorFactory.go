@@ -2,11 +2,20 @@ package rotor
 
 import "github.com/craftedbyjosh/go-engigma/pkg/types"
 
+func NewRotor(typeName string, initialPos types.Position) IRotor {
+	switch typeName {
+	case "I":
+		return newRotorI(initialPos)
+	default:
+		return nil // or handle error
+	}
+}
+
 type RotorI struct {
 	Rotor // Compose this object from base Rotor struct
 }
 
-func NewRotorI(initialPos types.Position) IRotor {
+func newRotorI(initialPos types.Position) IRotor {
 	return &RotorI{
 		Rotor: Rotor{
 			name:          "RotorI",
